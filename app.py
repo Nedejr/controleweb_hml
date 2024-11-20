@@ -377,151 +377,9 @@ def main():
         ############################################################################################
 
     if (f_pagina=='Tesouro'):
-
-        col1, col2, col3 = st.columns([0.3,0.4,0.3])
-        col4, col5 = st.columns([0.7,0.3])
-        col6, col7 = st.columns([0.7,0.3])
+        st.write('Em construção!!!')
         
-        df_totais_tesouro = connecta_google.carrega_dados(servico, 'Totais Tesouro')
-        df_taxa_tesouro_ipca = connecta_google.carrega_dados(servico, 'Operações')
-        df_titulos_comprados = df_taxa_tesouro_ipca
-        df = cotacoes.lista_tesouro_totais()
-
-        #Filtro por Título
-        str_titulos = sorted(df_totais_tesouro['Titulo'].unique().tolist(), reverse=False)
-        f_seleciona_titulo = st.sidebar.multiselect('Selecione Título',
-                                  str_titulos, 
-                                  placeholder='Selecione',
-                                  )
-
-        if f_seleciona_titulo != []:
-            df_totais_tesouro =  df_totais_tesouro.loc[(df_totais_tesouro['Titulo'].isin(f_seleciona_titulo))]
-            #df_taxa_tesouro_ipca =  df_taxa_tesouro_ipca.loc[(df_taxa_tesouro_ipca['Ativo'].isin(f_seleciona_titulo))]
-            df =  df.loc[(df['Titulo'].isin(f_seleciona_titulo))]
         
-        fig_tesouro_por_tipo = px.pie(df_totais_tesouro, values='Posição Atual', title='Tesouro por Tipo', color='Tipo', names='Tipo', height=350)
-        col1.plotly_chart(fig_tesouro_por_tipo, use_container_width=True)
-
-        #fig_tesouro_por_titulo = px.pie(df_totais_tesouro, values='Posição Atual', title='Tesouro por Titulo', color='Titulo', names='Titulo', height=350)
-        #col1.plotly_chart(fig_tesouro_por_titulo, use_container_width=True)
-        
-        df_taxa_tesouro_ipca = df_taxa_tesouro_ipca.loc[(df_taxa_tesouro_ipca['Ativo'].str.contains('IPCA'))]
-        df_taxa_tesouro_ipca = df_taxa_tesouro_ipca.loc[:,['Ativo', 'Qtd', 'Cotação']]
-        df_taxa_tesouro_ipca['Qtd'] = df_taxa_tesouro_ipca['Qtd'] * 100
-        df_taxa_tesouro_ipca['Total'] = df_taxa_tesouro_ipca['Qtd'] * df_taxa_tesouro_ipca['Cotação']
-        df_taxa_tesouro_ipca = (df_taxa_tesouro_ipca.groupby('Ativo')['Total'].sum()) / (df_taxa_tesouro_ipca.groupby('Ativo')['Qtd'].sum())
-        
-        df_taxa_tesouro_ipca = df_taxa_tesouro_ipca.reset_index()
-        df_taxa_tesouro_ipca = df_taxa_tesouro_ipca.rename(columns={0: 'Taxa'})
-
-
-        #Filtro por Data
-        df['Mes'] = df['Data'].apply(lambda x: str(x.year) + '/' + f'{x.month:02}')
-        str_datas = sorted(df['Mes'].unique().tolist(), reverse=True) 
-        #Filtrar a Data do Pagamento
-        f_selecionaData = st.sidebar.selectbox('Selecione o Mês/Ano', 
-                                                 str_datas, 
-                                                 placeholder='Selecione',
-                                                )
-        #Montagem do Filtro
-        if f_selecionaData != '':
-            df_titulos_comprados = df_titulos_comprados.loc[(df_titulos_comprados['Tipo']=='Tesouro'),['Ativo', 'Tipo','Mes','Total']]
-            df_titulos_comprados = df_titulos_comprados.groupby(['Ativo','Mes'])['Total'].sum().reset_index()
-            df_titulos_comprados = df_titulos_comprados.loc[(df_titulos_comprados['Mes']==(f_selecionaData))]
-            
-            df = df.loc[(df['Mes']==(f_selecionaData))]
-
-        fig_taxa = px.bar(df_taxa_tesouro_ipca, x='Ativo' , y='Taxa', color='Ativo', title='Taxa Média IPCA', barmode='group', orientation='v')
-        fig_taxa.add_trace(go.Scatter(
-            x=df_taxa_tesouro_ipca['Ativo'], 
-            y=round(df_taxa_tesouro_ipca['Taxa'],2),
-            text=round(df_taxa_tesouro_ipca['Taxa'],2),
-            mode='text',
-            textposition='top center',
-            textfont=dict(
-                size=14,
-            ),
-            showlegend=False,
-            
-        ))
-        fig_taxa.update_layout(showlegend=False)
-        col2.plotly_chart(fig_taxa, use_container_width=True)
-
-
-        df_agrupado_dia = df.loc[:,['Titulo', 'Qtd', 'Posição Atual', 'Data', 'Lucro']].sort_values(by='Data', ascending=False)
-        df_agrupado_dia['Data'] = df_agrupado_dia['Data'].dt.strftime('%d/%m/%Y')
-        df_agrupado_dia = df_agrupado_dia.groupby(['Data'])['Lucro'].sum().reset_index()
-        df_agrupado_dia = df_agrupado_dia.sort_values(by='Data', ascending=False)
-        
-
-
-        total_titulos_comprados = 0
-        total_lucro = 0
-        lucro_real = 0
-        if f_selecionaData:
-            if f_seleciona_titulo == []:
-                total_lucro = round(df_agrupado_dia['Lucro'].sum(),2)
-                lucro_real = round(df_agrupado_dia['Lucro'].sum() - df_titulos_comprados['Total'].sum(),2)
-                col3.metric(label=f'Total Lucro em {f_selecionaData} R$', value='R$ {:,.2f}'.format(total_lucro))  
-                col3.metric(label=f'Lucro Real em {f_selecionaData} R$', value='R$ {:,.2f}'.format(lucro_real))
-                col3.write(f'###### Títulos comprados em {f_selecionaData}: R$ {total_titulos_comprados}')
-                total_titulos_comprados = round(df_titulos_comprados['Total'].sum(),2)
-                if total_titulos_comprados> 0:
-                    col3.dataframe(df_titulos_comprados, hide_index=True, use_container_width=True)
-            else:
-                total_lucro = round(df_agrupado_dia['Lucro'].sum(),2)
-                lista_nome = ['Tesouro ' + titulo for titulo in f_seleciona_titulo]
-                df_titulos_comprados = df_titulos_comprados.loc[df_titulos_comprados['Ativo'].isin(lista_nome)]
-                total_titulos_comprados = df_titulos_comprados['Total'].sum()
-                col3.write(f'###### Títulos comprados em {f_selecionaData}: R$ {round(total_titulos_comprados,2)}')
-                if total_titulos_comprados > 0:
-                    lucro_real = total_lucro - total_titulos_comprados
-                    col3.dataframe(df_titulos_comprados, hide_index=True, use_container_width=True)
-                else:
-                    lucro_real = total_lucro
-                
-                col3.metric(label=f'Total Lucro em {f_selecionaData} R$', value='R$ {:,.2f}'.format(total_lucro))  
-                col3.metric(label=f'LUCRO REAL em {f_selecionaData} R$', value='R$ {:,.2f}'.format(lucro_real))
-                
-
-        fig_total_tesouro_diario = px.line(df_agrupado_dia.sort_values(by='Data'), x='Data', y='Lucro', title='Lucro Diário', markers=True, hover_data={"Data": "|%d/%m/%Y"})
-        fig_total_tesouro_diario.update_xaxes(  dtick="Data",
-                                                tickformat="%d\n%b")
-        
-        col4.plotly_chart(fig_total_tesouro_diario, use_container_width=True)
-        col5.dataframe(df_agrupado_dia, hide_index=True, use_container_width=True, column_config={
-                "Lucro": st.column_config.NumberColumn(
-                    help="Lucro diário do Título",
-                    format="R$ %.2f",
-                ),
-                "Posição Atual": st.column_config.NumberColumn(
-                    help="Posição Atual",
-                    format="R$ %.2f",
-                )
-            }
-        )
-        
-        fig_total_tesouro_diario = px.line(df, x='Data', y='Lucro', color= 'Titulo',title='Lucro Diário por Título', markers=True, hover_data={"Data": "|%d/%m/%Y"})
-        fig_total_tesouro_diario.update_xaxes(  dtick="Data",
-                                                tickformat="%d\n%b")
-        
-        col6.plotly_chart(fig_total_tesouro_diario, use_container_width=True)
-
-        df = df.loc[:,['Titulo', 'Qtd', 'Posição Atual', 'Data', 'Lucro']].sort_values(by='Data', ascending=False)
-        df['Data'] = df['Data'].dt.strftime('%d/%m/%Y')
-        
-        col7.write(f'###### Lucro Diário por Título R$ {round(df['Lucro'].sum(),2)}')
-        col7.dataframe(df, hide_index=True, use_container_width=True, column_config={
-                "Lucro": st.column_config.NumberColumn(
-                    help="Lucro diário do Título",
-                    format="R$ %.2f",
-                ),
-                "Posição Atual": st.column_config.NumberColumn(
-                    help="Posição Atual",
-                    format="R$ %.2f",
-                )
-            }
-        )
         
     if (f_pagina=='Operações'):
 
@@ -741,8 +599,6 @@ def main():
         st.write()
         st.write()
         st.write('by Nede Junior - 2024')
-
-
 
 def color_positivo(val):
     color = 'Green' if val >= 0 else 'red'
