@@ -10,7 +10,7 @@ import plotly.graph_objects as go
 
 def main():
 
-    st.set_page_config(page_title='ControleWeb', layout='wide')
+    st.set_page_config(page_title='ControleWeb', layout='wide', page_icon=':bar_chart:')
     st.title('Projeto Streamlit - utilizando planilha Google Sheets')
     st.write('')
 
@@ -379,8 +379,6 @@ def main():
     if (f_pagina=='Tesouro'):
         st.write('Em construção!!!')
         
-        
-        
     if (f_pagina=='Operações'):
 
         col1, col2, col3 = st.columns([0.9,0.05,0.05])
@@ -578,7 +576,7 @@ def main():
 
     if (f_pagina=='Inicio'):
         texto = '''
-                Este projeto particular foi desenvolvido em Python utilizando Streamlit foi projetado para facilitar o acesso 
+                Este projeto teste foi desenvolvido em Python utilizando Streamlit e foi projetado para facilitar o acesso 
             e a visualização de dados armazenados em uma planilha do Google Sheets. 
             O objetivo principal foi criar uma interface simples e intuitiva, permitindo que os usuários interajam com os dados
             em tempo real, sem a necessidade de conhecimentos avançados em programação ou manipulação de planilhas.
